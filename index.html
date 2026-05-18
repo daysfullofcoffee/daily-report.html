@@ -151,6 +151,11 @@
       color: white;
     }
 
+    .danger {
+      background: #dc2626;
+      color: white;
+    }
+
     .photo-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -200,319 +205,554 @@
     }
   </style>
 </head>
+
 <body>
 
-  <div class="container">
+<div class="container">
 
-    <div class="header">
-      <h1>Construction Daily Report</h1>
-      <p>Professional mobile-first jobsite reporting</p>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Project Information</div>
-
-      <div class="grid">
-        <div class="field">
-          <label>Project Name</label>
-          <input type="text" id="projectName" placeholder="Nashville Medical Tower" />
-        </div>
-
-        <div class="field">
-          <label>Superintendent</label>
-          <input type="text" id="superintendent" placeholder="Jonathan Day" />
-        </div>
-
-        <div class="field">
-          <label>Date</label>
-          <input type="date" id="date" />
-        </div>
-
-        <div class="field">
-          <label>Weather</label>
-          <input type="text" id="weather" value="Sunny - 72°F" />
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Crew Tracking</div>
-
-      <div class="total-workers">
-        Total Workers: <span id="totalWorkers">0</span>
-      </div>
-
-      <div class="grid">
-        <div class="crew-card">
-          <h3>Concrete</h3>
-          <input type="number" min="0" class="worker-input" value="0" />
-        </div>
-
-        <div class="crew-card">
-          <h3>Electrical</h3>
-          <input type="number" min="0" class="worker-input" value="0" />
-        </div>
-
-        <div class="crew-card">
-          <h3>Plumbing</h3>
-          <input type="number" min="0" class="worker-input" value="0" />
-        </div>
-
-        <div class="crew-card">
-          <h3>HVAC</h3>
-          <input type="number" min="0" class="worker-input" value="0" />
-        </div>
-        
-         <div class="crew-card">
-          <h3>Day Laborer</h3>
-          <input type="number" min="0" class="worker-input" value="0" />
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Daily Notes</div>
-
-      <div class="buttons" style="margin-bottom:20px;">
-        <button class="primary" onclick="startVoiceInput()">🎤 Voice to Text</button>
-      </div>
-
-      <div class="field">
-        <textarea id="notes" placeholder="Describe completed work, inspections, deliveries, incidents, etc..."></textarea>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Delays / Issues</div>
-
-      <div class="field">
-        <textarea id="delays" placeholder="Weather delays, missing materials, coordination conflicts, equipment failures..."></textarea>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Progress Photos</div>
-
-      <input type="file" id="photoUpload" accept="image/*" multiple />
-
-      <div class="photo-grid" id="photoGrid"></div>
-    </div>
-
-    <div class="section">
-      <div class="buttons">
-        <button class="green" onclick="saveReport()">Save Report</button>
-        <button class="blue" onclick="exportReport()">Export PDF</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Saved Reports</div>
-      <div id="savedReports"></div>
-    </div>
-
+  <div class="header">
+    <h1>Construction Daily Report</h1>
+    <p>Professional mobile-first jobsite reporting</p>
   </div>
 
-  <script>
-    document.getElementById('date').valueAsDate = new Date();
+  <div class="section">
+    <div class="section-title">Project Information</div>
 
-    const workerInputs = document.querySelectorAll('.worker-input');
-    const totalWorkers = document.getElementById('totalWorkers');
-    const photoGrid = document.getElementById('photoGrid');
-    const savedReports = document.getElementById('savedReports');
+    <div class="grid">
+      <div class="field">
+        <label>Project Name</label>
+        <input type="text" id="projectName" placeholder="Nashville Medical Tower" />
+      </div>
 
-    let photos = [];
-    let reports = [];
+      <div class="field">
+        <label>Superintendent</label>
+        <input type="text" id="superintendent" placeholder="Jonathan Day" />
+      </div>
 
-    function updateTotalWorkers() {
-      let total = 0;
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="date" />
+      </div>
 
-      workerInputs.forEach(input => {
-        total += Number(input.value || 0);
-      });
+      <div class="field">
+        <label>Weather</label>
+        <input type="text" id="weather" value="Sunny - 72°F" />
+      </div>
+    </div>
+  </div>
 
-      totalWorkers.textContent = total;
-    }
+  <div class="section">
+    <div class="section-title">Crew Tracking</div>
 
-    workerInputs.forEach(input => {
-      input.addEventListener('input', updateTotalWorkers);
-    });
+    <div class="total-workers">
+      Total Workers: <span id="totalWorkers">0</span>
+    </div>
 
-    updateTotalWorkers();
+    <div class="grid">
 
-    document.getElementById('photoUpload').addEventListener('change', function(event) {
-      const files = Array.from(event.target.files);
+      <div class="crew-card">
+        <h3>Concrete</h3>
+        <input type="number" min="0" class="worker-input" value="0" />
+      </div>
 
-      files.forEach(file => {
-        const reader = new FileReader();
+      <div class="crew-card">
+        <h3>Electrical</h3>
+        <input type="number" min="0" class="worker-input" value="0" />
+      </div>
 
-        reader.onload = function(e) {
-          photos.push(e.target.result);
+      <div class="crew-card">
+        <h3>Plumbing</h3>
+        <input type="number" min="0" class="worker-input" value="0" />
+      </div>
 
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          photoGrid.appendChild(img);
-        };
+      <div class="crew-card">
+        <h3>HVAC</h3>
+        <input type="number" min="0" class="worker-input" value="0" />
+      </div>
 
-        reader.readAsDataURL(file);
-      });
-    });
+      <div class="crew-card">
+        <h3>Day Laborer</h3>
+        <input type="number" min="0" class="worker-input" value="0" />
+      </div>
 
-    function startVoiceInput() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    </div>
+  </div>
 
-      if (!SpeechRecognition) {
-        alert('Voice recognition is not supported on this device.');
-        return;
-      }
+  <div class="section">
+    <div class="section-title">Daily Notes</div>
 
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.start();
+    <div class="buttons" style="margin-bottom:20px;">
+      <button class="primary" onclick="startVoiceInput()">🎤 Voice to Text</button>
+    </div>
 
-      recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        const notes = document.getElementById('notes');
-        notes.value += ' ' + transcript;
-      };
-    }
+    <div class="field">
+      <textarea id="notes" placeholder="Describe completed work, inspections, deliveries, incidents, etc..."></textarea>
+    </div>
+  </div>
 
-    function collectReportData() {
-      return {
-        projectName: document.getElementById('projectName').value,
-        superintendent: document.getElementById('superintendent').value,
-        date: document.getElementById('date').value,
-        weather: document.getElementById('weather').value,
-        notes: document.getElementById('notes').value,
-        delays: document.getElementById('delays').value,
-        manpower: {
-          concrete: workerInputs[0].value,
-          electrical: workerInputs[1].value,
-          plumbing: workerInputs[2].value,
-          hvac: workerInputs[3].value,
-        },
-        totalWorkers: totalWorkers.textContent,
-        photos: photos
-      };
-    }
+  <div class="section">
+    <div class="section-title">Delays / Issues</div>
 
-    function saveReport() {
-      const report = collectReportData();
-      reports.push(report);
+    <div class="field">
+      <textarea id="delays" placeholder="Weather delays, missing materials, coordination conflicts, equipment failures..."></textarea>
+    </div>
+  </div>
 
-      renderSavedReports();
+  <div class="section">
+    <div class="section-title">Progress Photos</div>
 
-      localStorage.setItem('dailyReports', JSON.stringify(reports));
+    <input type="file" id="photoUpload" accept="image/*" multiple />
 
-      alert('Daily report saved successfully.');
-    }
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
 
-    function renderSavedReports() {
-      savedReports.innerHTML = '';
+  <div class="section">
+    <div class="buttons">
+      <button class="green" onclick="saveReport()">Save Report</button>
+      <button class="primary" onclick="newReport()">New Report</button>
+      <button class="blue" onclick="exportReport()">Export PDF</button>
+    </div>
+  </div>
 
-      reports.forEach(report => {
-        const div = document.createElement('div');
-        div.className = 'saved-report';
+  <div class="section">
+    <div class="section-title">Saved Reports</div>
+    <div id="savedReports"></div>
+  </div>
 
-        div.innerHTML = `
-          <div>
-            <div style="font-weight:bold;font-size:18px;">${report.projectName || 'Untitled Project'}</div>
-            <div style="color:#666;margin-top:4px;">${report.date}</div>
+</div>
+
+<script>
+
+document.getElementById('date').valueAsDate = new Date();
+
+const workerInputs = document.querySelectorAll('.worker-input');
+const totalWorkers = document.getElementById('totalWorkers');
+const photoGrid = document.getElementById('photoGrid');
+const savedReports = document.getElementById('savedReports');
+
+let photos = [];
+let reports = [];
+let currentReportId = null;
+
+function updateTotalWorkers() {
+  let total = 0;
+
+  workerInputs.forEach(input => {
+    total += Number(input.value || 0);
+  });
+
+  totalWorkers.textContent = total;
+}
+
+workerInputs.forEach(input => {
+  input.addEventListener('input', updateTotalWorkers);
+});
+
+updateTotalWorkers();
+
+document.getElementById('photoUpload').addEventListener('change', function(event) {
+
+  const files = Array.from(event.target.files);
+
+  files.forEach(file => {
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+      photos.push(e.target.result);
+
+      const img = document.createElement('img');
+      img.src = e.target.result;
+
+      photoGrid.appendChild(img);
+    };
+
+    reader.readAsDataURL(file);
+
+  });
+
+});
+
+function startVoiceInput() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert('Voice recognition is not supported on this device.');
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = 'en-US';
+  recognition.start();
+
+  recognition.onresult = function(event) {
+
+    const transcript = event.results[0][0].transcript;
+
+    document.getElementById('notes').value += ' ' + transcript;
+  };
+}
+
+function collectReportData() {
+
+  return {
+
+    id: currentReportId || Date.now(),
+
+    projectName: document.getElementById('projectName').value,
+
+    superintendent: document.getElementById('superintendent').value,
+
+    date: document.getElementById('date').value,
+
+    weather: document.getElementById('weather').value,
+
+    notes: document.getElementById('notes').value,
+
+    delays: document.getElementById('delays').value,
+
+    manpower: {
+      concrete: workerInputs[0].value,
+      electrical: workerInputs[1].value,
+      plumbing: workerInputs[2].value,
+      hvac: workerInputs[3].value,
+      dayLaborer: workerInputs[4].value,
+    },
+
+    totalWorkers: totalWorkers.textContent,
+
+    photos: photos
+  };
+}
+
+function saveReport() {
+
+  const report = collectReportData();
+
+  const existingIndex = reports.findIndex(r => r.id === report.id);
+
+  if (existingIndex !== -1) {
+
+    reports[existingIndex] = report;
+
+  } else {
+
+    reports.push(report);
+  }
+
+  localStorage.setItem(
+    'dailyReports',
+    JSON.stringify(reports)
+  );
+
+  renderSavedReports();
+
+  alert('Daily report saved successfully.');
+}
+
+function renderSavedReports() {
+
+  savedReports.innerHTML = '';
+
+  reports
+    .slice()
+    .reverse()
+    .forEach(report => {
+
+      const div = document.createElement('div');
+
+      div.className = 'saved-report';
+
+      div.innerHTML = `
+
+        <div>
+          <div style="font-weight:bold;font-size:18px;">
+            ${report.projectName || 'Untitled Project'}
           </div>
+
+          <div style="color:#666;margin-top:4px;">
+            ${report.date}
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;">
 
           <div class="badge">
             ${report.totalWorkers} Workers
           </div>
-        `;
 
-        savedReports.appendChild(div);
-      });
-    }
+          <button class="primary"
+            onclick="loadReport(${report.id})">
+            Open
+          </button>
 
-    function exportReport() {
-      const report = collectReportData();
+          <button class="danger"
+            onclick="deleteReport(${report.id})">
+            Delete
+          </button>
 
-      const newWindow = window.open('', '_blank');
+        </div>
+      `;
 
-      const photoHtml = report.photos
-        .map(photo => `<img src="${photo}" style="width:240px;border-radius:14px;margin:10px;" />`)
-        .join('');
+      savedReports.appendChild(div);
 
-      newWindow.document.write(`
-        <html>
-        <head>
-          <title>Construction Daily Report</title>
-        </head>
+    });
+}
 
-        <body style="font-family:Arial;padding:40px;color:#111;">
-          <h1 style="font-size:42px;">Construction Daily Report</h1>
+function loadReport(reportId) {
 
-          <hr style="margin:30px 0;" />
+  const report = reports.find(r => r.id === reportId);
 
-          <h2>Project Information</h2>
-          <p><strong>Project:</strong> ${report.projectName}</p>
-          <p><strong>Superintendent:</strong> ${report.superintendent}</p>
-          <p><strong>Date:</strong> ${report.date}</p>
-          <p><strong>Weather:</strong> ${report.weather}</p>
+  if (!report) return;
 
-          <hr style="margin:30px 0;" />
+  currentReportId = report.id;
 
-          <h2>Crew Tracking</h2>
-          <table style="border-collapse:collapse;width:100%;margin-top:20px;">
-            <tr>
-              <th style="border:1px solid #ccc;padding:12px;text-align:left;">Trade</th>
-              <th style="border:1px solid #ccc;padding:12px;text-align:left;">Workers</th>
-            </tr>
-            <tr>
-              <td style="border:1px solid #ccc;padding:12px;">Concrete</td>
-              <td style="border:1px solid #ccc;padding:12px;">${report.manpower.concrete}</td>
-            </tr>
-            <tr>
-              <td style="border:1px solid #ccc;padding:12px;">Electrical</td>
-              <td style="border:1px solid #ccc;padding:12px;">${report.manpower.electrical}</td>
-            </tr>
-            <tr>
-              <td style="border:1px solid #ccc;padding:12px;">Plumbing</td>
-              <td style="border:1px solid #ccc;padding:12px;">${report.manpower.plumbing}</td>
-            </tr>
-            <tr>
-              <td style="border:1px solid #ccc;padding:12px;">HVAC</td>
-              <td style="border:1px solid #ccc;padding:12px;">${report.manpower.hvac}</td>
-            </tr>
-          </table>
+  document.getElementById('projectName').value =
+    report.projectName || '';
 
-          <hr style="margin:30px 0;" />
+  document.getElementById('superintendent').value =
+    report.superintendent || '';
 
-          <h2>Daily Notes</h2>
-          <p style="line-height:1.7;">${report.notes}</p>
+  document.getElementById('date').value =
+    report.date || '';
 
-          <hr style="margin:30px 0;" />
+  document.getElementById('weather').value =
+    report.weather || '';
 
-          <h2>Delays / Issues</h2>
-          <p style="line-height:1.7;">${report.delays}</p>
+  document.getElementById('notes').value =
+    report.notes || '';
 
-          <hr style="margin:30px 0;" />
+  document.getElementById('delays').value =
+    report.delays || '';
 
-          <h2>Progress Photos</h2>
-          <div>${photoHtml}</div>
-        </body>
-        </html>
-      `);
+  workerInputs[0].value = report.manpower.concrete || 0;
+  workerInputs[1].value = report.manpower.electrical || 0;
+  workerInputs[2].value = report.manpower.plumbing || 0;
+  workerInputs[3].value = report.manpower.hvac || 0;
+  workerInputs[4].value = report.manpower.dayLaborer || 0;
 
-      newWindow.document.close();
-      newWindow.print();
-    }
+  updateTotalWorkers();
 
-    function loadSavedReports() {
-      const stored = localStorage.getItem('dailyReports');
+  photos = report.photos || [];
 
-      if (stored) {
-        reports = JSON.parse(stored);
-        renderSavedReports();
+  photoGrid.innerHTML = '';
+
+  photos.forEach(photo => {
+
+    const img = document.createElement('img');
+
+    img.src = photo;
+
+    photoGrid.appendChild(img);
+
+  });
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+function deleteReport(reportId) {
+
+  const confirmed = confirm(
+    'Delete this saved report?'
+  );
+
+  if (!confirmed) return;
+
+  reports = reports.filter(r => r.id !== reportId);
+
+  localStorage.setItem(
+    'dailyReports',
+    JSON.stringify(reports)
+  );
+
+  renderSavedReports();
+}
+
+function newReport() {
+
+  currentReportId = null;
+
+  document.getElementById('projectName').value = '';
+  document.getElementById('superintendent').value = '';
+  document.getElementById('weather').value = '';
+  document.getElementById('notes').value = '';
+  document.getElementById('delays').value = '';
+
+  workerInputs.forEach(input => {
+    input.value = 0;
+  });
+
+  photos = [];
+
+  photoGrid.innerHTML = '';
+
+  document.getElementById('date').valueAsDate = new Date();
+
+  updateTotalWorkers();
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+function exportReport() {
+
+  const report = collectReportData();
+
+  const newWindow = window.open('', '_blank');
+
+  const photoHtml = report.photos
+    .map(photo =>
+      `<img src="${photo}"
+        style="width:240px;border-radius:14px;margin:10px;" />`
+    )
+    .join('');
+
+  newWindow.document.write(`
+
+    <html>
+
+    <head>
+      <title>Construction Daily Report</title>
+    </head>
+
+    <body style="font-family:Arial;padding:40px;color:#111;">
+
+      <h1 style="font-size:42px;">
+        Construction Daily Report
+      </h1>
+
+      <hr style="margin:30px 0;" />
+
+      <h2>Project Information</h2>
+
+      <p><strong>Project:</strong> ${report.projectName}</p>
+      <p><strong>Superintendent:</strong> ${report.superintendent}</p>
+      <p><strong>Date:</strong> ${report.date}</p>
+      <p><strong>Weather:</strong> ${report.weather}</p>
+
+      <hr style="margin:30px 0;" />
+
+      <h2>Crew Tracking</h2>
+
+      <table style="border-collapse:collapse;width:100%;margin-top:20px;">
+
+        <tr>
+          <th style="border:1px solid #ccc;padding:12px;text-align:left;">
+            Trade
+          </th>
+
+          <th style="border:1px solid #ccc;padding:12px;text-align:left;">
+            Workers
+          </th>
+        </tr>
+
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">Concrete</td>
+          <td style="border:1px solid #ccc;padding:12px;">
+            ${report.manpower.concrete}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">Electrical</td>
+          <td style="border:1px solid #ccc;padding:12px;">
+            ${report.manpower.electrical}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">Plumbing</td>
+          <td style="border:1px solid #ccc;padding:12px;">
+            ${report.manpower.plumbing}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">HVAC</td>
+          <td style="border:1px solid #ccc;padding:12px;">
+            ${report.manpower.hvac}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">
+            Day Laborer
+          </td>
+
+          <td style="border:1px solid #ccc;padding:12px;">
+            ${report.manpower.dayLaborer || 0}
+          </td>
+        </tr>
+
+      </table>
+
+      <hr style="margin:30px 0;" />
+
+      <h2>Daily Notes</h2>
+
+      <p style="line-height:1.7;">
+        ${report.notes}
+      </p>
+
+      <hr style="margin:30px 0;" />
+
+      <h2>Delays / Issues</h2>
+
+      <p style="line-height:1.7;">
+        ${report.delays}
+      </p>
+
+      <hr style="margin:30px 0;" />
+
+      <h2>Progress Photos</h2>
+
+      <div>${photoHtml}</div>
+
+    </body>
+
+    </html>
+
+  `);
+
+  newWindow.document.close();
+
+  newWindow.print();
+}
+
+function loadSavedReports() {
+
+  const stored = localStorage.getItem('dailyReports');
+
+  if (stored) {
+
+    reports = JSON.parse(stored);
+
+    // Add IDs to old reports
+    reports.forEach(report => {
+
+      if (!report.id) {
+        report.id = Date.now() + Math.random();
       }
-    }
 
-    loadSavedReports();
-  </script>
+    });
+
+    renderSavedReports();
+  }
+}
+
+loadSavedReports();
+
+</script>
 
 </body>
 </html>
