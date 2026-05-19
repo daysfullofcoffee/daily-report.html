@@ -252,27 +252,47 @@
 
       <div class="crew-card">
         <h3>Concrete</h3>
-        <input type="number" min="0" class="worker-input" value="0" />
+        <input type="number" min="0" class="worker-input" placeholder="0" />
       </div>
 
       <div class="crew-card">
         <h3>Electrical</h3>
-        <input type="number" min="0" class="worker-input" value="0" />
+        <input type="number" min="0" class="worker-input" placeholder="0" />
       </div>
 
       <div class="crew-card">
         <h3>Plumbing</h3>
-        <input type="number" min="0" class="worker-input" value="0" />
+        <input type="number" min="0" class="worker-input" placeholder="0" />
       </div>
 
       <div class="crew-card">
         <h3>HVAC</h3>
-        <input type="number" min="0" class="worker-input" value="0" />
+        <input type="number" min="0" class="worker-input" placeholder="0" />
       </div>
 
       <div class="crew-card">
-        <h3>Day Laborer</h3>
-        <input type="number" min="0" class="worker-input" value="0" />
+        <h3>Framers</h3>
+        <input type="number" min="0" class="worker-input" placeholder="0" />
+      </div>
+
+      <div class="crew-card">
+        <h3>Drywall</h3>
+        <input type="number" min="0" class="worker-input" placeholder="0" />
+      </div>
+
+      <div class="crew-card">
+        <h3>Roofers</h3>
+        <input type="number" min="0" class="worker-input" placeholder="0" />
+      </div>
+
+      <div class="crew-card">
+        <h3>Trim/Paint</h3>
+        <input type="number" min="0" class="worker-input" placeholder="0" />
+      </div>
+
+      <div class="crew-card">
+        <h3>Day Labor</h3>
+        <input type="number" min="0" class="worker-input" placeholder="0" />
       </div>
 
     </div>
@@ -282,7 +302,9 @@
     <div class="section-title">Daily Notes</div>
 
     <div class="buttons" style="margin-bottom:20px;">
-      <button class="primary" onclick="startVoiceInput()">🎤 Voice to Text</button>
+      <button class="primary" onclick="startVoiceInput('notes')">
+        🎤 Voice to Text
+      </button>
     </div>
 
     <div class="field">
@@ -292,6 +314,12 @@
 
   <div class="section">
     <div class="section-title">Delays / Issues</div>
+
+    <div class="buttons" style="margin-bottom:20px;">
+      <button class="primary" onclick="startVoiceInput('delays')">
+        🎤 Voice to Text
+      </button>
+    </div>
 
     <div class="field">
       <textarea id="delays" placeholder="Weather delays, missing materials, coordination conflicts, equipment failures..."></textarea>
@@ -323,7 +351,17 @@
 
 <script>
 
-document.getElementById('date').valueAsDate = new Date();
+function getLocalDate() {
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+document.getElementById('date').value = getLocalDate();
 
 const workerInputs = document.querySelectorAll('.worker-input');
 const totalWorkers = document.getElementById('totalWorkers');
@@ -335,6 +373,7 @@ let reports = [];
 let currentReportId = null;
 
 function updateTotalWorkers() {
+
   let total = 0;
 
   workerInputs.forEach(input => {
@@ -374,7 +413,7 @@ document.getElementById('photoUpload').addEventListener('change', function(event
 
 });
 
-function startVoiceInput() {
+function startVoiceInput(targetId = 'notes') {
 
   const SpeechRecognition =
     window.SpeechRecognition ||
@@ -394,7 +433,9 @@ function startVoiceInput() {
 
     const transcript = event.results[0][0].transcript;
 
-    document.getElementById('notes').value += ' ' + transcript;
+    const targetField = document.getElementById(targetId);
+
+    targetField.value += ' ' + transcript;
   };
 }
 
@@ -421,7 +462,11 @@ function collectReportData() {
       electrical: workerInputs[1].value,
       plumbing: workerInputs[2].value,
       hvac: workerInputs[3].value,
-      dayLaborer: workerInputs[4].value,
+      framers: workerInputs[4].value,
+      drywall: workerInputs[5].value,
+      roofers: workerInputs[6].value,
+      trimPaint: workerInputs[7].value,
+      dayLabor: workerInputs[8].value,
     },
 
     totalWorkers: totalWorkers.textContent,
@@ -437,11 +482,8 @@ function saveReport() {
   const existingIndex = reports.findIndex(r => r.id === report.id);
 
   if (existingIndex !== -1) {
-
     reports[existingIndex] = report;
-
   } else {
-
     reports.push(report);
   }
 
@@ -534,7 +576,11 @@ function loadReport(reportId) {
   workerInputs[1].value = report.manpower.electrical || 0;
   workerInputs[2].value = report.manpower.plumbing || 0;
   workerInputs[3].value = report.manpower.hvac || 0;
-  workerInputs[4].value = report.manpower.dayLaborer || 0;
+  workerInputs[4].value = report.manpower.framers || 0;
+  workerInputs[5].value = report.manpower.drywall || 0;
+  workerInputs[6].value = report.manpower.roofers || 0;
+  workerInputs[7].value = report.manpower.trimPaint || 0;
+  workerInputs[8].value = report.manpower.dayLabor || 0;
 
   updateTotalWorkers();
 
@@ -582,19 +628,24 @@ function newReport() {
 
   document.getElementById('projectName').value = '';
   document.getElementById('superintendent').value = '';
-  document.getElementById('weather').value = '';
+
+  // Reset date to today's LOCAL date
+  document.getElementById('date').value = getLocalDate();
+
+  // Restore default weather
+  document.getElementById('weather').value = 'Sunny - 72°F';
+
   document.getElementById('notes').value = '';
   document.getElementById('delays').value = '';
 
+  // Clear crew inputs so placeholders show again
   workerInputs.forEach(input => {
-    input.value = 0;
+    input.value = '';
   });
 
   photos = [];
 
   photoGrid.innerHTML = '';
-
-  document.getElementById('date').valueAsDate = new Date();
 
   updateTotalWorkers();
 
@@ -685,12 +736,37 @@ function exportReport() {
         </tr>
 
         <tr>
+          <td style="border:1px solid #ccc;padding:12px;">Framers</td>
           <td style="border:1px solid #ccc;padding:12px;">
-            Day Laborer
+            ${report.manpower.framers}
           </td>
+        </tr>
 
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">Drywall</td>
           <td style="border:1px solid #ccc;padding:12px;">
-            ${report.manpower.dayLaborer || 0}
+            ${report.manpower.drywall}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">Roofers</td>
+          <td style="border:1px solid #ccc;padding:12px;">
+            ${report.manpower.roofers}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">Trim/Paint</td>
+          <td style="border:1px solid #ccc;padding:12px;">
+            ${report.manpower.trimPaint}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px;">Day Labor</td>
+          <td style="border:1px solid #ccc;padding:12px;">
+            ${report.manpower.dayLabor}
           </td>
         </tr>
 
@@ -737,7 +813,6 @@ function loadSavedReports() {
 
     reports = JSON.parse(stored);
 
-    // Add IDs to old reports
     reports.forEach(report => {
 
       if (!report.id) {
