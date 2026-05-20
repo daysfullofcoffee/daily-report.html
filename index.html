@@ -170,6 +170,33 @@
       border-radius: 18px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
+.photo-wrapper {
+  position: relative;
+}
+
+.delete-photo-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(220, 38, 38, 0.95);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 10;
+}
+
+.delete-photo-btn:hover {
+  transform: scale(1.05);
+}
 
     .saved-report {
       border: 1px solid #d1d5db;
@@ -401,10 +428,8 @@ document.getElementById('photoUpload').addEventListener('change', function(event
 
       photos.push(e.target.result);
 
-      const img = document.createElement('img');
-      img.src = e.target.result;
+      renderPhotos();
 
-      photoGrid.appendChild(img);
     };
 
     reader.readAsDataURL(file);
@@ -437,6 +462,43 @@ function startVoiceInput(targetId = 'notes') {
 
     targetField.value += ' ' + transcript;
   };
+}
+function renderPhotos() {
+
+  photoGrid.innerHTML = '';
+
+  photos.forEach((photo, index) => {
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'photo-wrapper';
+
+    const img = document.createElement('img');
+    img.src = photo;
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-photo-btn';
+    deleteBtn.innerHTML = '×';
+
+    deleteBtn.onclick = function() {
+
+      const confirmed = confirm(
+        'Delete this photo?'
+      );
+
+      if (!confirmed) return;
+
+      photos.splice(index, 1);
+
+      renderPhotos();
+    };
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(deleteBtn);
+
+    photoGrid.appendChild(wrapper);
+
+  });
+
 }
 
 function collectReportData() {
@@ -588,15 +650,7 @@ function loadReport(reportId) {
 
   photoGrid.innerHTML = '';
 
-  photos.forEach(photo => {
-
-    const img = document.createElement('img');
-
-    img.src = photo;
-
-    photoGrid.appendChild(img);
-
-  });
+renderPhotos();
 
   window.scrollTo({
     top: 0,
@@ -624,10 +678,20 @@ function deleteReport(reportId) {
 
 function newReport() {
 
+  // Keep previous project + superintendent
+  const previousProject =
+    document.getElementById('projectName').value;
+
+  const previousSuperintendent =
+    document.getElementById('superintendent').value;
+
   currentReportId = null;
 
-  document.getElementById('projectName').value = '';
-  document.getElementById('superintendent').value = '';
+  document.getElementById('projectName').value =
+    previousProject;
+
+  document.getElementById('superintendent').value =
+    previousSuperintendent;
 
   // Reset date to today's LOCAL date
   document.getElementById('date').value = getLocalDate();
@@ -800,9 +864,13 @@ function exportReport() {
 
   `);
 
-  newWindow.document.close();
+newWindow.document.close();
 
-  newWindow.print();
+newWindow.onload = function() {
+  setTimeout(() => {
+    newWindow.print();
+  }, 500);
+};
 }
 
 function loadSavedReports() {
