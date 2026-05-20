@@ -156,6 +156,21 @@
       color: white;
     }
 
+    .recording {
+      background: #dc2626;
+      color: white;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
     .photo-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -170,33 +185,6 @@
       border-radius: 18px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
-.photo-wrapper {
-  position: relative;
-}
-
-.delete-photo-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  border: none;
-  background: rgba(220, 38, 38, 0.95);
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  z-index: 10;
-}
-
-.delete-photo-btn:hover {
-  transform: scale(1.05);
-}
 
     .saved-report {
       border: 1px solid #d1d5db;
@@ -329,8 +317,11 @@
     <div class="section-title">Daily Notes</div>
 
     <div class="buttons" style="margin-bottom:20px;">
-      <button class="primary" onclick="startVoiceInput('notes')">
+      <button class="primary" id="notesVoiceBtn" onclick="startVoiceInput('notes')">
         🎤 Voice to Text
+      </button>
+      <button class="danger" id="notesStopBtn" onclick="stopVoiceInput()" style="display:none;">
+        ⏹️ Stop Recording
       </button>
     </div>
 
@@ -343,8 +334,11 @@
     <div class="section-title">Delays / Issues</div>
 
     <div class="buttons" style="margin-bottom:20px;">
-      <button class="primary" onclick="startVoiceInput('delays')">
+      <button class="primary" id="delaysVoiceBtn" onclick="startVoiceInput('delays')">
         🎤 Voice to Text
+      </button>
+      <button class="danger" id="delaysStopBtn" onclick="stopVoiceInput()" style="display:none;">
+        ⏹️ Stop Recording
       </button>
     </div>
 
@@ -377,6 +371,10 @@
 </div>
 
 <script>
+
+let recognition = null;
+let isRecording = false;
+let currentTargetId = null;
 
 function getLocalDate() {
   const today = new Date();
@@ -428,8 +426,10 @@ document.getElementById('photoUpload').addEventListener('change', function(event
 
       photos.push(e.target.result);
 
-      renderPhotos();
+      const img = document.createElement('img');
+      img.src = e.target.result;
 
+      photoGrid.appendChild(img);
     };
 
     reader.readAsDataURL(file);
@@ -449,10 +449,20 @@ function startVoiceInput(targetId = 'notes') {
     return;
   }
 
-  const recognition = new SpeechRecognition();
+  recognition = new SpeechRecognition();
+  isRecording = true;
+  currentTargetId = targetId;
 
   recognition.lang = 'en-US';
   recognition.start();
+
+  // Update UI to show recording state
+  const voiceBtn = document.getElementById(targetId === 'notes' ? 'notesVoiceBtn' : 'delaysVoiceBtn');
+  const stopBtn = document.getElementById(targetId === 'notes' ? 'notesStopBtn' : 'delaysStopBtn');
+
+  voiceBtn.style.display = 'none';
+  stopBtn.style.display = 'inline-block';
+  stopBtn.classList.add('recording');
 
   recognition.onresult = function(event) {
 
@@ -462,43 +472,34 @@ function startVoiceInput(targetId = 'notes') {
 
     targetField.value += ' ' + transcript;
   };
+
+  recognition.onerror = function(event) {
+    console.error('Speech recognition error:', event.error);
+    resetVoiceUI(targetId);
+  };
+
+  recognition.onend = function() {
+    resetVoiceUI(targetId);
+  };
 }
-function renderPhotos() {
 
-  photoGrid.innerHTML = '';
+function stopVoiceInput() {
+  if (recognition && isRecording) {
+    recognition.stop();
+    isRecording = false;
+  }
+}
 
-  photos.forEach((photo, index) => {
+function resetVoiceUI(targetId) {
+  const voiceBtn = document.getElementById(targetId === 'notes' ? 'notesVoiceBtn' : 'delaysVoiceBtn');
+  const stopBtn = document.getElementById(targetId === 'notes' ? 'notesStopBtn' : 'delaysStopBtn');
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'photo-wrapper';
+  voiceBtn.style.display = 'inline-block';
+  stopBtn.style.display = 'none';
+  stopBtn.classList.remove('recording');
 
-    const img = document.createElement('img');
-    img.src = photo;
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'delete-photo-btn';
-    deleteBtn.innerHTML = '×';
-
-    deleteBtn.onclick = function() {
-
-      const confirmed = confirm(
-        'Delete this photo?'
-      );
-
-      if (!confirmed) return;
-
-      photos.splice(index, 1);
-
-      renderPhotos();
-    };
-
-    wrapper.appendChild(img);
-    wrapper.appendChild(deleteBtn);
-
-    photoGrid.appendChild(wrapper);
-
-  });
-
+  isRecording = false;
+  currentTargetId = null;
 }
 
 function collectReportData() {
@@ -650,7 +651,15 @@ function loadReport(reportId) {
 
   photoGrid.innerHTML = '';
 
-renderPhotos();
+  photos.forEach(photo => {
+
+    const img = document.createElement('img');
+
+    img.src = photo;
+
+    photoGrid.appendChild(img);
+
+  });
 
   window.scrollTo({
     top: 0,
@@ -678,20 +687,10 @@ function deleteReport(reportId) {
 
 function newReport() {
 
-  // Keep previous project + superintendent
-  const previousProject =
-    document.getElementById('projectName').value;
-
-  const previousSuperintendent =
-    document.getElementById('superintendent').value;
-
   currentReportId = null;
 
-  document.getElementById('projectName').value =
-    previousProject;
-
-  document.getElementById('superintendent').value =
-    previousSuperintendent;
+  document.getElementById('projectName').value = '';
+  document.getElementById('superintendent').value = '';
 
   // Reset date to today's LOCAL date
   document.getElementById('date').value = getLocalDate();
@@ -864,13 +863,9 @@ function exportReport() {
 
   `);
 
-newWindow.document.close();
+  newWindow.document.close();
 
-newWindow.onload = function() {
-  setTimeout(() => {
-    newWindow.print();
-  }, 500);
-};
+  newWindow.print();
 }
 
 function loadSavedReports() {
@@ -899,3 +894,4 @@ loadSavedReports();
 
 </body>
 </html>
+
