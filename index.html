@@ -217,6 +217,18 @@
       font-weight: bold;
     }
 
+    @keyframes pulse-recording {
+      0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); transform: scale(1); }
+      50%  { box-shadow: 0 0 0 12px rgba(220, 38, 38, 0); transform: scale(1.04); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); transform: scale(1); }
+    }
+
+    button.recording {
+      background: #dc2626 !important;
+      color: white !important;
+      animation: pulse-recording 1.2s ease-in-out infinite;
+    }
+
     @media (max-width: 768px) {
       .header h1 {
         font-size: 32px;
@@ -329,7 +341,7 @@
     <div class="section-title">Daily Notes</div>
 
     <div class="buttons" style="margin-bottom:20px;">
-      <button class="primary" onclick="startVoiceInput('notes')">
+      <button class="primary" onclick="startVoiceInput('notes', this)">
         🎤 Voice to Text
       </button>
     </div>
@@ -343,7 +355,7 @@
     <div class="section-title">Delays / Issues</div>
 
     <div class="buttons" style="margin-bottom:20px;">
-      <button class="primary" onclick="startVoiceInput('delays')">
+      <button class="primary" onclick="startVoiceInput('delays', this)">
         🎤 Voice to Text
       </button>
     </div>
@@ -438,7 +450,15 @@ document.getElementById('photoUpload').addEventListener('change', function(event
 
 });
 
-function startVoiceInput(targetId = 'notes') {
+const activeRecognitions = {};
+
+function startVoiceInput(targetId = 'notes', btn) {
+
+  // If already recording this field, stop it
+  if (activeRecognitions[targetId]) {
+    activeRecognitions[targetId].stop();
+    return;
+  }
 
   const SpeechRecognition =
     window.SpeechRecognition ||
@@ -450,18 +470,50 @@ function startVoiceInput(targetId = 'notes') {
   }
 
   const recognition = new SpeechRecognition();
-
   recognition.lang = 'en-US';
-  recognition.start();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+
+  // Find the button that triggered this (by targetId)
+  const button = btn || document.querySelector(`[onclick*="'${targetId}'"]`);
+
+  function setRecording(isRecording) {
+    if (!button) return;
+    if (isRecording) {
+      button.classList.add('recording');
+      button.textContent = '⏹ Stop Recording';
+    } else {
+      button.classList.remove('recording');
+      button.textContent = '🎤 Voice to Text';
+    }
+  }
+
+  recognition.onstart = function() {
+    activeRecognitions[targetId] = recognition;
+    setRecording(true);
+  };
 
   recognition.onresult = function(event) {
-
-    const transcript = event.results[0][0].transcript;
-
     const targetField = document.getElementById(targetId);
-
-    targetField.value += ' ' + transcript;
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        targetField.value += ' ' + event.results[i][0].transcript;
+      }
+    }
   };
+
+  recognition.onerror = function(event) {
+    console.error('Speech recognition error:', event.error);
+    delete activeRecognitions[targetId];
+    setRecording(false);
+  };
+
+  recognition.onend = function() {
+    delete activeRecognitions[targetId];
+    setRecording(false);
+  };
+
+  recognition.start();
 }
 function renderPhotos() {
 
